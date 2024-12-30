@@ -15,90 +15,112 @@
 
         private void InitializeComponent()
         {
-            this.ProductsDataGridView = new System.Windows.Forms.DataGridView();
-            this.CartDataGridView = new System.Windows.Forms.DataGridView();
-            this.AddToCartButton = new System.Windows.Forms.Button();
-            this.BuyButton = new System.Windows.Forms.Button();
-            this.TotalLabel = new System.Windows.Forms.Label();
-            this.NameTextBox = new System.Windows.Forms.TextBox();
-            this.CodeTextBox = new System.Windows.Forms.TextBox();
-            this.NameLabel = new System.Windows.Forms.Label();
-            this.CodeLabel = new System.Windows.Forms.Label();
-            this.SuspendLayout();
-
+            ProductsDataGridView = new DataGridView();
+            CartDataGridView = new DataGridView();
+            AddToCartButton = new Button();
+            BuyButton = new Button();
+            TotalLabel = new Label();
+            NameTextBox = new TextBox();
+            CodeTextBox = new TextBox();
+            NameLabel = new Label();
+            CodeLabel = new Label();
+            ((System.ComponentModel.ISupportInitialize)ProductsDataGridView).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)CartDataGridView).BeginInit();
+            SuspendLayout();
+            // 
             // ProductsDataGridView
-            this.ProductsDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.ProductsDataGridView.Location = new System.Drawing.Point(12, 12);
-            this.ProductsDataGridView.Name = "ProductsDataGridView";
-            this.ProductsDataGridView.Size = new System.Drawing.Size(400, 200);
-            this.ProductsDataGridView.AutoGenerateColumns = true; // Luo sarakkeet automaattisesti datan mukaan
-            this.ProductsDataGridView.ReadOnly = true;           // Estää muokkaamisen
-            this.ProductsDataGridView.SelectionMode = DataGridViewSelectionMode.FullRowSelect; // Valinta rivitasolla
-            this.ProductsDataGridView.MultiSelect = false;       // Estää useamman rivin valinnan
-
-
+            // 
+            ProductsDataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            ProductsDataGridView.Location = new Point(12, 12);
+            ProductsDataGridView.MultiSelect = false;
+            ProductsDataGridView.Name = "ProductsDataGridView";
+            ProductsDataGridView.ReadOnly = true;
+            ProductsDataGridView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            ProductsDataGridView.Size = new Size(400, 200);
+            ProductsDataGridView.TabIndex = 0;
+            // 
             // CartDataGridView
-            this.CartDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.CartDataGridView.Location = new System.Drawing.Point(450, 12);
-            this.CartDataGridView.Name = "CartDataGridView";
-            this.CartDataGridView.Size = new System.Drawing.Size(400, 200);
-
+            // 
+            CartDataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            CartDataGridView.Location = new Point(450, 12);
+            CartDataGridView.Name = "CartDataGridView";
+            CartDataGridView.Size = new Size(400, 200);
+            CartDataGridView.TabIndex = 1;
+            // 
             // AddToCartButton
-            this.AddToCartButton.Location = new System.Drawing.Point(12, 230);
-            this.AddToCartButton.Name = "AddToCartButton";
-            this.AddToCartButton.Size = new System.Drawing.Size(100, 30);
-            this.AddToCartButton.Text = "Lisää koriin";
-            this.AddToCartButton.Click += new System.EventHandler(this.AddToCartButton_Click);
-
+            // 
+            AddToCartButton.Location = new Point(12, 230);
+            AddToCartButton.Name = "AddToCartButton";
+            AddToCartButton.Size = new Size(100, 30);
+            AddToCartButton.TabIndex = 2;
+            AddToCartButton.Text = "Lisää koriin";
+            AddToCartButton.Click += AddToCartButton_Click;
+            // 
             // BuyButton
-            this.BuyButton.Location = new System.Drawing.Point(750, 230);
-            this.BuyButton.Name = "BuyButton";
-            this.BuyButton.Size = new System.Drawing.Size(100, 30);
-            this.BuyButton.Text = "Osta";
-            this.BuyButton.Click += new System.EventHandler(this.BuyButton_Click);
-
+            // 
+            BuyButton.Location = new Point(750, 230);
+            BuyButton.Name = "BuyButton";
+            BuyButton.Size = new Size(100, 30);
+            BuyButton.TabIndex = 3;
+            BuyButton.Text = "Osta";
+            BuyButton.Click += BuyButton_Click;
+            // 
             // TotalLabel
-            this.TotalLabel.Location = new System.Drawing.Point(450, 230);
-            this.TotalLabel.Name = "TotalLabel";
-            this.TotalLabel.Size = new System.Drawing.Size(300, 30);
-            this.TotalLabel.Text = "Yhteensä (ALV 25.5%): 0.00";
-
+            // 
+            TotalLabel.Location = new Point(450, 230);
+            TotalLabel.Name = "TotalLabel";
+            TotalLabel.Size = new Size(300, 30);
+            TotalLabel.TabIndex = 4;
+            TotalLabel.Text = "Yhteensä (ALV 25.5%): 0.00";
+            // 
             // NameTextBox
-            this.NameTextBox.Location = new System.Drawing.Point(450, 280);
-            this.NameTextBox.Name = "NameTextBox";
-            this.NameTextBox.Size = new System.Drawing.Size(200, 20);
-
+            // 
+            NameTextBox.Location = new Point(450, 280);
+            NameTextBox.Name = "NameTextBox";
+            NameTextBox.Size = new Size(200, 23);
+            NameTextBox.TabIndex = 5;
+            // 
             // CodeTextBox
-            this.CodeTextBox.Location = new System.Drawing.Point(450, 320);
-            this.CodeTextBox.Name = "CodeTextBox";
-            this.CodeTextBox.Size = new System.Drawing.Size(200, 20);
-
+            // 
+            CodeTextBox.Location = new Point(450, 320);
+            CodeTextBox.Name = "CodeTextBox";
+            CodeTextBox.Size = new Size(200, 23);
+            CodeTextBox.TabIndex = 6;
+            // 
             // NameLabel
-            this.NameLabel.Location = new System.Drawing.Point(360, 280);
-            this.NameLabel.Name = "NameLabel";
-            this.NameLabel.Size = new System.Drawing.Size(80, 20);
-            this.NameLabel.Text = "Nimi:";
-
+            // 
+            NameLabel.Location = new Point(360, 280);
+            NameLabel.Name = "NameLabel";
+            NameLabel.Size = new Size(80, 20);
+            NameLabel.TabIndex = 7;
+            NameLabel.Text = "Nimi:";
+            // 
             // CodeLabel
-            this.CodeLabel.Location = new System.Drawing.Point(360, 320);
-            this.CodeLabel.Name = "CodeLabel";
-            this.CodeLabel.Size = new System.Drawing.Size(80, 20);
-            this.CodeLabel.Text = "Kutsutunnus:";
-
+            // 
+            CodeLabel.Location = new Point(360, 320);
+            CodeLabel.Name = "CodeLabel";
+            CodeLabel.Size = new Size(80, 20);
+            CodeLabel.TabIndex = 8;
+            CodeLabel.Text = "Kutsutunnus:";
+            // 
             // Tuotteet
-            this.ClientSize = new System.Drawing.Size(900, 400);
-            this.Controls.Add(this.ProductsDataGridView);
-            this.Controls.Add(this.CartDataGridView);
-            this.Controls.Add(this.AddToCartButton);
-            this.Controls.Add(this.BuyButton);
-            this.Controls.Add(this.TotalLabel);
-            this.Controls.Add(this.NameTextBox);
-            this.Controls.Add(this.CodeTextBox);
-            this.Controls.Add(this.NameLabel);
-            this.Controls.Add(this.CodeLabel);
-            this.Name = "Tuotteet";
-            this.Text = "Varasto Hallinta - Tuotteet";
-            this.ResumeLayout(false);
+            // 
+            ClientSize = new Size(900, 400);
+            Controls.Add(ProductsDataGridView);
+            Controls.Add(CartDataGridView);
+            Controls.Add(AddToCartButton);
+            Controls.Add(BuyButton);
+            Controls.Add(TotalLabel);
+            Controls.Add(NameTextBox);
+            Controls.Add(CodeTextBox);
+            Controls.Add(NameLabel);
+            Controls.Add(CodeLabel);
+            Name = "Tuotteet";
+            Text = "Varasto Hallinta - Tuotteet";
+            ((System.ComponentModel.ISupportInitialize)ProductsDataGridView).EndInit();
+            ((System.ComponentModel.ISupportInitialize)CartDataGridView).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         private System.Windows.Forms.DataGridView ProductsDataGridView;

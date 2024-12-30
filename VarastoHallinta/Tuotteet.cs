@@ -112,69 +112,8 @@ namespace VarastoHallinta
             TotalLabel.Text = $"Yhteensä (ALV 25.5%): {totalWithTax:C2}";
         }
 
-        private async void BuyButton_Click(object sender, EventArgs e)
-        {
-            if (!ValidatePurchase(out var purchase)) return;
-
-            try
-            {
-                // Serialisoidaan Purchase-objekti JSON-muotoon
-                var json = JsonSerializer.Serialize(purchase, new JsonSerializerOptions { WriteIndented = true });
-                Console.WriteLine($"Lähetettävä JSON: {json}"); // Debug-tulostus
-
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                // Lähetetään POST-pyyntö backendille
-                var response = await client.PostAsync("purchase", content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Ostoksesi on vahvistettu!");
-                    cart.Clear();
-                    UpdateCart();
-                    LoadProducts();
-                }
-                else
-                {
-                    // Luetaan virheviesti backendiltä ja näytetään käyttäjälle
-                    var errorMessage = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show($"Virhe ostoksessa: {errorMessage}");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Virhe ostoksessa: {ex.Message}");
-            }
-        }
-
-        private bool ValidatePurchase(out Purchase purchase)
-        {
-            purchase = null;
-
-            if (cart.Count == 0)
-            {
-                MessageBox.Show("Ostoskorisi on tyhjä.");
-                return false;
-            }
-
-            var name = NameTextBox.Text;
-            var code = CodeTextBox.Text;
-
-            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(code))
-            {
-                MessageBox.Show("Syötä nimi ja kutsutunnus.");
-                return false;
-            }
-
-            purchase = new Purchase
-            {
-                CustomerName = name,
-                Code = code,
-                Items = cart.Select(c => new PurchaseItem { ProductId = c.ProductId, Quantity = c.Quantity }).ToList()
-            };
-
-            return true;
-        }
+        // Ostoksen käsittely ja lähetys backendille on poistettu
+        // Poistettiin myös ostoksen validointi ja ostoksen lähetyksen koodi.
 
         public class Product
         {
@@ -193,19 +132,6 @@ namespace VarastoHallinta
             public int ProductId { get; set; }
             public string ProductName { get; set; }
             public decimal UnitPrice { get; set; }
-            public int Quantity { get; set; }
-        }
-
-        public class Purchase
-        {
-            public string CustomerName { get; set; }
-            public string Code { get; set; }
-            public List<PurchaseItem> Items { get; set; }
-        }
-
-        public class PurchaseItem
-        {
-            public int ProductId { get; set; }
             public int Quantity { get; set; }
         }
 
@@ -232,6 +158,11 @@ namespace VarastoHallinta
                 prompt.ShowDialog();
                 return inputBox.Text;
             }
+        }
+
+        private void BuyButton_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
