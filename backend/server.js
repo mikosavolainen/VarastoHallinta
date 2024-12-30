@@ -41,72 +41,59 @@ app.get('/products', async (req, res) => {
     }
 });
 
-app.post('/purchase', async (req, res) => {
-    const { customerName, code, items } = req.body;
-    console.log("Vastaanotettu JSON:", req.body); // Debug-tulostus
+app.post('/purchase', (req, res) => {
+    const { callsign, name, purchased_items, total_amount, date } = req.body;
 
-    // Tarkistetaan syöte
-    if (!customerName || !code || !Array.isArray(items) || items.length === 0) {
-        return res.status(400).send('Virheellinen syöte: Tarkista asiakkaan nimi, kutsutunnus ja ostokset.');
+    if (!callsign || !name || !purchased_items || !total_amount || !date) {
+        return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    let conn;
-    try {
-        conn = await pool.getConnection();
-        await conn.beginTransaction(); // Aloitetaan transaktio
+    const connection = db.promise();
 
-        let totalPrice = 0;
-        let purchasedItems = [];
+    connection.beginTransaction()
+        .then(() => {
+            // Lisää ostos purchases-tauluun
+            return connection.query(
+                'INSERT INTO purchases (callsign, name, total_amount, date) VALUES (?, ?, ?, ?)',
+                [callsign, name, total_amount, date]
+            );
+        })
+        .then(([result]) => {
+            const purchaseId = result.insertId;
 
-        for (const item of items) {
-            const { productId, quantity } = item;
+            const updateStockPromises = purchased_items.map(item => {
+                const { id: productId, quantity } = item;
 
-            // Tarkistetaan, että tuote ja määrä ovat kelvollisia
-            if (!productId || !quantity || quantity <= 0) {
-                throw new Error(`Virheellinen tuote tai määrä: ${JSON.stringify(item)}`);
-            }
+                return connection.query(
+                    'UPDATE products SET quantity = quantity - ? WHERE id = ? AND quantity >= ?',
+                    [quantity, productId, quantity]
+                ).then(([result]) => {
+                    if (result.affectedRows === 0) {
+                        throw new Error(`Not enough stock for product ID ${productId}`);
+                    }
 
-            // Haetaan tuote tietokannasta
-            const [productRows] = await conn.query('SELECT id, name, price, quantity FROM products WHERE id = ?', [productId]);
-            if (productRows.length === 0) {
-                throw new Error(`Tuotetta ID:llä ${productId} ei löytynyt.`);
-            }
+                    return connection.query(
+                        'INSERT INTO purchase_items (purchase_id, product_id, quantity) VALUES (?, ?, ?)',
+                        [purchaseId, productId, quantity]
+                    );
+                });
+            });
 
-            const product = productRows[0];
-            if (product.quantity < quantity) {
-                throw new Error(`Tuote ID ${productId}: Varasto ei riitä (${product.quantity} jäljellä).`);
-            }
-
-            // Päivitetään varaston saldo
-            await conn.query('UPDATE products SET quantity = quantity - ? WHERE id = ?', [quantity, productId]);
-
-            totalPrice += product.price * quantity; // Lasketaan kokonaishinta
-            purchasedItems.push(`${product.name} (x${quantity})`); // Lisätään ostetut tuotteet
-        }
-
-        // Tallennetaan ostos tietokantaan
-        const purchasedItemsStr = purchasedItems.join(", ");
-        await conn.query(
-            'INSERT INTO purchases (customer_name, customer_code, purchased_items, total_price) VALUES (?, ?, ?, ?)',
-            [customerName, code, purchasedItemsStr, totalPrice]
-        );
-
-        await conn.commit(); // Suoritetaan transaktio
-        conn.release(); // Vapautetaan yhteys
-
-        res.send('Osto onnistui!'); // Palautetaan onnistumisviesti
-    } catch (err) {
-        console.error(err); // Tulostetaan virhe konsoliin
-
-        // Tarkistetaan, onko conn määritelty ennen rollbackia
-        if (conn) {
-            await conn.rollback(); // Perutaan transaktio, jos virhe
-            conn.release(); // Vapautetaan yhteys
-        }
-
-        res.status(500).send(`Virhe ostoksessa: ${err.message}`); // Virheilmoitus asiakkaalle
-    }
+            return Promise.all(updateStockPromises);
+        })
+        .then(() => {
+            return connection.commit();
+        })
+        .then(() => {
+            res.status(200).json({ message: 'Purchase recorded successfully' });
+        })
+        .catch(err => {
+            connection.rollback();
+            res.status(400).json({ error: err.message });
+        });
 });
+
+
 
 // Käynnistä palvelin
 app.listen(port, () => {
