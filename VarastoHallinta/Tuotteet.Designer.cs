@@ -24,6 +24,7 @@
             CodeTextBox = new TextBox();
             NameLabel = new Label();
             CodeLabel = new Label();
+            exit = new Button();
             ((System.ComponentModel.ISupportInitialize)ProductsDataGridView).BeginInit();
             ((System.ComponentModel.ISupportInitialize)CartDataGridView).BeginInit();
             SuspendLayout();
@@ -103,9 +104,20 @@
             CodeLabel.TabIndex = 8;
             CodeLabel.Text = "Kutsutunnus:";
             // 
+            // exit
+            // 
+            exit.Location = new Point(12, 365);
+            exit.Name = "exit";
+            exit.Size = new Size(100, 23);
+            exit.TabIndex = 9;
+            exit.Text = "Takaisin";
+            exit.UseVisualStyleBackColor = true;
+            exit.Click += exit_Click;
+            // 
             // Tuotteet
             // 
             ClientSize = new Size(900, 400);
+            Controls.Add(exit);
             Controls.Add(ProductsDataGridView);
             Controls.Add(CartDataGridView);
             Controls.Add(AddToCartButton);
@@ -132,5 +144,6 @@
         private System.Windows.Forms.TextBox CodeTextBox;
         private System.Windows.Forms.Label NameLabel;
         private System.Windows.Forms.Label CodeLabel;
+        private Button exit;
     }
 }

@@ -15,5 +15,12 @@ namespace VarastoHallinta
             log.Show();
             this.Hide();
         }
+
+        private void FillButton_Click(object sender, EventArgs e)
+        {
+            var log = new Varasto();
+            log.Show();
+            this.Hide();
+        }
     }
 }

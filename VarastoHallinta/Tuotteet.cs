@@ -21,6 +21,7 @@ namespace VarastoHallinta
             InitializeComponent();
             client = new HttpClient { BaseAddress = new Uri("http://localhost:3000/") };
             LoadProducts();
+
         }
 
         private async void LoadProducts()
@@ -160,9 +161,67 @@ namespace VarastoHallinta
             }
         }
 
-        private void BuyButton_Click(object sender, EventArgs e)
+        private async void BuyButton_Click(object sender, EventArgs e)
         {
+            if (cart.Count == 0)
+            {
+                MessageBox.Show("Ostoskori on tyhjä. Lisää tuotteita ostoskoriin ennen ostamista.");
+                return;
+            }
 
+            string userName = NameTextBox.Text.Trim();
+            string callSign = CodeTextBox.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(callSign))
+            {
+                MessageBox.Show("Nimi ja kutsutunnus ovat pakollisia.");
+                return;
+            }
+
+            var purchase = new
+            {
+                callsign = callSign,
+                name = userName,
+                purchased_items = cart.Select(c => new
+                {
+                    id = c.ProductId,
+                    quantity = c.Quantity
+                }).ToList(),
+                total_amount = cart.Sum(c => c.UnitPrice * c.Quantity),
+                date = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+            };
+
+            try
+            {
+                var jsonContent = JsonSerializer.Serialize(purchase);
+                var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync("purchase", httpContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Osto onnistui!");
+                    cart.Clear();
+                    UpdateCart();
+                    LoadProducts();
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show($"Virhe ostoa tehdessä: {response.StatusCode}\n{error}");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Virhe ostoa tehdessä: {ex.Message}");
+            }
+        }
+
+        private void exit_Click(object sender, EventArgs e)
+        {
+            var log = new Etusivu();
+            log.Show();
+            this.Hide();
         }
     }
 }

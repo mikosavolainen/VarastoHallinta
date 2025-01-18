@@ -50,6 +50,7 @@
             FillButton.TabIndex = 1;
             FillButton.Text = "Täydennä";
             FillButton.UseVisualStyleBackColor = true;
+            FillButton.Click += FillButton_Click;
             // 
             // Etusivu
             // 
