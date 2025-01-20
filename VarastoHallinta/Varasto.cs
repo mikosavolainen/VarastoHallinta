@@ -18,7 +18,10 @@ namespace VarastoHallinta
         public Varasto()
         {
             InitializeComponent();
-            client = new HttpClient { BaseAddress = new Uri("http://localhost:3000/") };
+            client = new HttpClient
+            {
+                BaseAddress = new Uri(publix.Domain)
+            };
             LoadProducts();
 
             productNameTextBox.PlaceholderText = "Nimi";
