@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+
 namespace VarastoHallinta
 {
     public partial class Tuotteet : Form
@@ -19,7 +20,10 @@ namespace VarastoHallinta
         public Tuotteet()
         {
             InitializeComponent();
-            client = new HttpClient { BaseAddress = new Uri("http://localhost:3000/") };
+            client = new HttpClient
+            {
+                BaseAddress = new Uri(publix.Domain)
+            };
             LoadProducts();
 
         }
@@ -113,9 +117,7 @@ namespace VarastoHallinta
             TotalLabel.Text = $"Yhteensä (ALV 25.5%): {totalWithTax:C2}";
         }
 
-        // Ostoksen käsittely ja lähetys backendille on poistettu
-        // Poistettiin myös ostoksen validointi ja ostoksen lähetyksen koodi.
-
+        
         public class Product
         {
             [JsonPropertyName("id")]
