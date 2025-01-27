@@ -202,15 +202,6 @@ app.post("/purchase", async (req, res) => {
     return res.status(400).json({ error: "Puuttuvat pakolliset kentät" });
   }
 
-  // Tarkistetaan, että ostetuilla tuotteilla on kaikki tarvittavat kentät
-  for (const item of purchased_items) {
-    if (!item.name || !item.quantity || !item.price) {
-      return res.status(400).json({
-        error: `Puuttuu pakollinen kenttä tuotteelta: ${JSON.stringify(item)}`,
-      });
-    }
-  }
-
   let conn;
   try {
     conn = await pool.getConnection();
@@ -234,7 +225,6 @@ app.post("/purchase", async (req, res) => {
 
     await conn.commit();
 
-    // Valmistellaan ostopäivän tiedot PDF:lle
     const purchaseDetails = {
       purchaseId,
       callsign,
@@ -245,12 +235,9 @@ app.post("/purchase", async (req, res) => {
         productName: item.name,
         quantity: item.quantity,
         price: item.price,
-        totalPrice: item.quantity * item.price, // Lasketaan kokonaishinta
+        totalPrice: item.quantity * item.price,
       }))
     };
-
-    // Varmistetaan, että tuotteiden tiedot ovat kunnossa
-    console.log("Purchase Details:", purchaseDetails); // Debuggaus
 
     const pdfPath = generateReceiptPDF(purchaseDetails);
     await sendReceiptToDiscord(pdfPath);
@@ -264,7 +251,6 @@ app.post("/purchase", async (req, res) => {
     if (conn) conn.release();
   }
 });
-
 
 app.listen(port, () => {
   console.log(`Palvelin käynnissä: http://localhost:${port}`);
