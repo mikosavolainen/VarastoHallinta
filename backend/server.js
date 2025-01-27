@@ -13,7 +13,7 @@ const port = 2058;
 const pool = mariadb.createPool({
   host: "localhost",
   user: "root",
-  password: "",
+  password: "1234592",
   database: "warehouse",
   connectionLimit: 5,
 });
@@ -34,6 +34,15 @@ app.use((req, res, next) => {
     );
   }
   next();
+});
+
+// Status
+app.get("/", async (req, res) => {
+  try {
+    res.status(200).send("Toimii")
+  } catch (err) {
+    res.status(500).send("Virhe.");
+  }
 });
 
 // Hae tuotteet
