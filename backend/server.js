@@ -19,7 +19,11 @@ const pool = mariadb.createPool({
 });
 
 // Discord Webhook URL
-const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1333356865136099338/EvQlBkT9itBunyT_yjyRxM_BSvvsty-UbZK2e9fBI_sBUGB6J3PDRL6vDe46tKDdMGNx";
+const DISCORD_WEBHOOK_URL =
+  "https://discord.com/api/webhooks/1333356865136099338/EvQlBkT9itBunyT_yjyRxM_BSvvsty-UbZK2e9fBI_sBUGB6J3PDRL6vDe46tKDdMGNx";
+
+// Asetetaan DEBUG-tilan arvo (true / false)
+const DEBUG = true;
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -39,8 +43,9 @@ app.use((req, res, next) => {
 // Status
 app.get("/", async (req, res) => {
   try {
-    res.status(200).send("Toimii")
+    res.status(200).send("Palvelin ja Domain Toimii");
   } catch (err) {
+    if (DEBUG) console.error("Error in status route:", err);
     res.status(500).send("Virhe.");
   }
 });
@@ -55,6 +60,7 @@ app.get("/products", async (req, res) => {
     conn.release();
     res.json(rows);
   } catch (err) {
+    if (DEBUG) console.error("Error fetching products:", err);
     res.status(500).send("Virhe tuotteiden haussa.");
   }
 });
@@ -64,7 +70,7 @@ app.post("/addProduct", async (req, res) => {
   const { name, price, quantity } = req.body;
 
   if (!name || !price || !quantity) {
-    return res.status(400).json({ error: "Tietoja puuttuu" }); 
+    return res.status(400).json({ error: "Tietoja puuttuu" });
   }
 
   let conn;
@@ -76,16 +82,17 @@ app.post("/addProduct", async (req, res) => {
     );
 
     if (existingProduct.length > 0) {
-      return res.status(409).json({ error: "Tuote on jo" }); 
+      return res.status(409).json({ error: "Tuote on jo" });
     }
 
     await conn.query(
       "INSERT INTO products (name, price, quantity) VALUES (?, ?, ?)",
       [name, price, quantity]
     );
-    res.status(201).json({ message: "Tuote lisätty onnistuneesti" }); 
+    res.status(201).json({ message: "Tuote lisätty onnistuneesti" });
   } catch (err) {
-    res.status(500).json({ error: "VIRHE Tuotetta lisätessä" }); 
+    if (DEBUG) console.error("Error adding product:", err);
+    res.status(500).json({ error: "VIRHE Tuotetta lisätessä" });
   } finally {
     if (conn) conn.release();
   }
@@ -96,7 +103,7 @@ app.put("/updateProduct/:id", async (req, res) => {
   const { quantity } = req.body;
 
   if (!quantity || quantity < 0) {
-    return res.status(400).json({ error: "Kelvollinen määrä on pakollinen." }); 
+    return res.status(400).json({ error: "Kelvollinen määrä on pakollinen." });
   }
 
   let conn;
@@ -108,7 +115,7 @@ app.put("/updateProduct/:id", async (req, res) => {
     ]);
 
     if (product.length === 0) {
-      return res.status(404).json({ error: "Tuotetta ei löytynyt." }); 
+      return res.status(404).json({ error: "Tuotetta ei löytynyt." });
     }
 
     await conn.query("UPDATE products SET quantity = ? WHERE id = ?", [
@@ -118,15 +125,14 @@ app.put("/updateProduct/:id", async (req, res) => {
 
     res
       .status(200)
-      .json({ message: "Tuotteen määrä päivitetty onnistuneesti." }); 
+      .json({ message: "Tuotteen määrä päivitetty onnistuneesti." });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Virhe tuotteen päivityksessä." }); 
+    if (DEBUG) console.error("Error updating product:", err);
+    res.status(500).json({ error: "Virhe tuotteen päivityksessä." });
   } finally {
     if (conn) conn.release();
   }
 });
-
 
 // Funktio tuotteiden määrän vähentämiseen
 async function deductProductQuantities(conn, purchasedItems) {
@@ -184,7 +190,7 @@ async function sendReceiptToDiscord(pdfPath) {
       headers: formData.getHeaders(),
     });
   } catch (error) {
-    console.error("Error sending receipt to Discord:", error);
+    if (DEBUG) console.error("Error sending receipt to Discord:", error);
   }
 }
 
@@ -199,7 +205,6 @@ app.post("/purchase", async (req, res) => {
   let conn;
   try {
     conn = await pool.getConnection();
-
     await conn.beginTransaction();
 
     const result = await conn.query(
@@ -220,7 +225,6 @@ app.post("/purchase", async (req, res) => {
 
     await conn.commit();
 
-    // Prepare the purchase details for the receipt
     const purchaseDetails = {
       purchaseId,
       callsign,
@@ -231,16 +235,16 @@ app.post("/purchase", async (req, res) => {
         productName: item.name,
         quantity: item.quantity,
         price: item.price,
-        totalPrice: item.quantity * item.price
+        totalPrice: item.quantity * item.price,
       }))
     };
 
-    // Generate the PDF and send it to Discord
     const pdfPath = generateReceiptPDF(purchaseDetails);
     await sendReceiptToDiscord(pdfPath);
 
     res.status(200).json({ message: "Ostettu onnistuneesti" });
   } catch (err) {
+    if (DEBUG) console.error("Error during purchase:", err);
     if (conn) await conn.rollback();
     res.status(400).json({ error: err.message });
   } finally {
