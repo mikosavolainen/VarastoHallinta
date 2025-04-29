@@ -10,24 +10,26 @@ const FormData = require("form-data");
 const app = express();
 const port = 2058;
 
+// Yhteys tietokantaan
 const pool = mariadb.createPool({
   host: "localhost",
   user: "root",
-  password: "1234592",
+  password: "",
   database: "warehouse",
   connectionLimit: 5,
 });
 
 // Discord Webhook URL
 const DISCORD_WEBHOOK_URL =
-  "https://discord.com/api/webhooks/1333356865136099338/EvQlBkT9itBunyT_yjyRxM_BSvvsty-UbZK2e9fBI_sBUGB6J3PDRL6vDe46tKDdMGNx";
+  "https://discord.com/api/webhooks/1366855317564166195/rQ1Hg4hDaTqkhVvbIGkUZiYFuqMtO4N3OCCXI53leR3ixQp-LjRKPsNqBYwZzwmqZeVu";
 
-// Asetetaan DEBUG-tilan arvo (true / false)
+// DEBUG-tila
 const DEBUG = true;
 
 app.use(cors());
 app.use(bodyParser.json());
 
+// Kirjoitetaan bodyn avaimet lowercase-alkuisiksi (vakava tyylipiste)
 app.use((req, res, next) => {
   if (req.body && typeof req.body === "object") {
     req.body = Object.fromEntries(
@@ -40,7 +42,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Status
+// Status endpointti
 app.get("/", async (req, res) => {
   try {
     res.status(200).send("Palvelin ja Domain Toimii");
@@ -50,12 +52,12 @@ app.get("/", async (req, res) => {
   }
 });
 
-// Hae tuotteet
+// Hae kaikki tuotteet
 app.get("/products", async (req, res) => {
   try {
     const conn = await pool.getConnection();
     const rows = await conn.query(
-      "SELECT id, name, price, quantity FROM products"
+      "SELECT `id`, `name`, `price`, `quantity`, `category`, `desc` FROM products"
     );
     conn.release();
     res.json(rows);
@@ -65,12 +67,12 @@ app.get("/products", async (req, res) => {
   }
 });
 
-// Lisää tuote
+// Lisää uusi tuote
 app.post("/addProduct", async (req, res) => {
-  const { name, price, quantity } = req.body;
+  const { name, price, quantity, category, desc } = req.body;
 
   if (!name || !price || !quantity) {
-    return res.status(400).json({ error: "Tietoja puuttuu" });
+    return res.status(400).json({ error: "Pakollisia tietoja puuttuu" });
   }
 
   let conn;
@@ -82,30 +84,28 @@ app.post("/addProduct", async (req, res) => {
     );
 
     if (existingProduct.length > 0) {
-      return res.status(409).json({ error: "Tuote on jo" });
+      return res.status(409).json({ error: "Tuote on jo olemassa." });
     }
 
     await conn.query(
-      "INSERT INTO products (name, price, quantity) VALUES (?, ?, ?)",
-      [name, price, quantity]
+      "INSERT INTO products (name, price, quantity, category, `desc`) VALUES (?, ?, ?, ?, ?)",
+      [name, price, quantity, category, desc]
     );
     res.status(201).json({ message: "Tuote lisätty onnistuneesti" });
   } catch (err) {
     if (DEBUG) console.error("Error adding product:", err);
-    res.status(500).json({ error: "VIRHE Tuotetta lisätessä" });
+    res.status(500).json({ error: "Virhe tuotetta lisättäessä" });
   } finally {
     if (conn) conn.release();
   }
 });
 
+// Päivitä tuote (kaikki kentät mahdollisia)
 app.put("/updateProduct/:id", async (req, res) => {
   const productId = req.params.id;
-  const { quantity } = req.body;
+  const updates = req.body;
 
-  if (!quantity || quantity < 0) {
-    return res.status(400).json({ error: "Kelvollinen määrä on pakollinen." });
-  }
-
+  // Validoidaan että tuote on olemassa
   let conn;
   try {
     conn = await pool.getConnection();
@@ -118,14 +118,28 @@ app.put("/updateProduct/:id", async (req, res) => {
       return res.status(404).json({ error: "Tuotetta ei löytynyt." });
     }
 
-    await conn.query("UPDATE products SET quantity = ? WHERE id = ?", [
-      quantity,
-      productId,
-    ]);
+    const fields = [];
+    const values = [];
 
-    res
-      .status(200)
-      .json({ message: "Tuotteen määrä päivitetty onnistuneesti." });
+    for (const field of ["name", "price", "quantity", "category", "desc"]) {
+      if (updates[field] !== undefined) {
+        fields.push(`${field} = ?`);
+        values.push(updates[field]);
+      }
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ error: "Ei päivitettäviä kenttiä." });
+    }
+
+    values.push(productId);
+
+    await conn.query(
+      `UPDATE products SET ${fields.join(", ")} WHERE id = ?`,
+      values
+    );
+
+    res.status(200).json({ message: "Tuotteen tieto päivitetty." });
   } catch (err) {
     if (DEBUG) console.error("Error updating product:", err);
     res.status(500).json({ error: "Virhe tuotteen päivityksessä." });
@@ -134,55 +148,54 @@ app.put("/updateProduct/:id", async (req, res) => {
   }
 });
 
-// Funktio tuotteiden määrän vähentämiseen
+// Funktio vähentää ostosten määrät
 async function deductProductQuantities(conn, purchasedItems) {
   for (const item of purchasedItems) {
     const { id: productId, quantity } = item;
 
-    const updateResult = await conn.query(
+    const [result] = await conn.query(
       "UPDATE products SET quantity = quantity - ? WHERE id = ? AND quantity >= ?",
       [quantity, productId, quantity]
     );
 
-    if (updateResult.affectedRows === 0) {
-      throw new Error(`Not enough stock for product ID ${productId}`);
+    if (result.affectedRows === 0) {
+      throw new Error(`Ei varastossa tarpeeksi tuotetta ID: ${productId}`);
     }
   }
 }
 
-// Funktio PDF:n luomiseen
+// Laskun PDF:n generointi
 function generateReceiptPDF(purchaseDetails) {
   const doc = new PDFDocument();
   const filePath = `./receipts/receipt_${purchaseDetails.purchaseId}.pdf`;
 
   doc.pipe(fs.createWriteStream(filePath));
 
-  doc.fontSize(18).text("Receipt", { align: "center" });
+  doc.fontSize(18).text("OSTOKSETTELO", { align: "center" });
   doc.moveDown();
-  doc.fontSize(14).text(`Purchase Date: ${purchaseDetails.date}`);
-  doc.text(`Buyer Name: ${purchaseDetails.name}`);
-  doc.text(`Callsign: ${purchaseDetails.callsign}`);
+  doc.text(`Päivämäärä: ${purchaseDetails.date}`);
+  doc.text(`Nimi: ${purchaseDetails.name}`);
+  doc.text(`Kutsutunnus: ${purchaseDetails.callsign}`);
   doc.moveDown();
+  doc.text("Ostetut tuotteet:");
 
-  doc.text("Purchased Items:", { underline: true });
   purchaseDetails.items.forEach((item) => {
     doc.text(
-      `${item.productName} - ${item.quantity} x ${item.price} = ${item.totalPrice}`
+      `${item.productName} – ${item.quantity} x ${item.price} € = ${(item.quantity * item.price).toFixed(2)} €`
     );
   });
 
   doc.moveDown();
-  doc.text(`Total Amount: ${purchaseDetails.totalAmount}`);
+  doc.text(`Yhteensä: ${purchaseDetails.totalAmount.toFixed(2)} €`);
   doc.end();
 
   return filePath;
 }
 
-// Funktio lähettää PDF Discordiin
+// Lähetä PDF Discordiin
 async function sendReceiptToDiscord(pdfPath) {
   try {
     const file = fs.createReadStream(pdfPath);
-
     const formData = new FormData();
     formData.append("file", file, { filename: "receipt.pdf" });
 
@@ -190,16 +203,16 @@ async function sendReceiptToDiscord(pdfPath) {
       headers: formData.getHeaders(),
     });
   } catch (error) {
-    if (DEBUG) console.error("Error sending receipt to Discord:", error);
+    if (DEBUG) console.error("Virhe lähettäessä PDF:ää Discordiin:", error);
   }
 }
 
-// Osto endpoint
+// Ostotapahtuma
 app.post("/purchase", async (req, res) => {
   const { callsign, name, purchased_items, total_amount, date } = req.body;
 
   if (!callsign || !name || !purchased_items || !total_amount || !date) {
-    return res.status(400).json({ error: "Puuttuvat pakolliset kentät" });
+    return res.status(400).json({ error: "Puuttuvat kentät" });
   }
 
   let conn;
@@ -225,27 +238,38 @@ app.post("/purchase", async (req, res) => {
 
     await conn.commit();
 
+    // Haetaan nimet jokaiselle tuotteelle
     const purchaseDetails = {
       purchaseId,
       callsign,
       name,
       totalAmount: total_amount,
       date,
-      items: purchased_items.map(item => ({
-        productName: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        totalPrice: item.quantity * item.price,
-      }))
+      items: [],
     };
+
+    for (const item of purchased_items) {
+      const [product] = await conn.query(
+        "SELECT name, price FROM products WHERE id = ?",
+        [item.id]
+      );
+      purchaseDetails.items.push({
+        productName: product.name,
+        quantity: item.quantity,
+        price: product.price,
+        totalPrice: item.quantity * product.price,
+      });
+    }
 
     const pdfPath = generateReceiptPDF(purchaseDetails);
     await sendReceiptToDiscord(pdfPath);
 
-    res.status(200).json({ message: "Ostettu onnistuneesti" });
+    res
+      .status(200)
+      .json({ message: "Osto suoritettu onnistuneesti!", purchaseId });
   } catch (err) {
-    if (DEBUG) console.error("Error during purchase:", err);
     if (conn) await conn.rollback();
+    if (DEBUG) console.error("Ostossa virhe:", err);
     res.status(400).json({ error: err.message });
   } finally {
     if (conn) conn.release();
