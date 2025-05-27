@@ -57,7 +57,7 @@ app.get("/products", async (req, res) => {
   try {
     const conn = await pool.getConnection();
     const rows = await conn.query(
-      "SELECT `id`, `name`, `price`, `quantity`, `category`, `desc` FROM products"
+      "SELECT `id`, `name`, `price`, `quantity`, `category`, `desc`, `vanha` FROM products"
     );
     conn.release();
     res.json(rows);
