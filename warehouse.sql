@@ -23,9 +23,23 @@ CREATE TABLE IF NOT EXISTS `products` (
   `name` varchar(255) NOT NULL,
   `price` decimal(10,2) NOT NULL,
   `quantity` int(11) NOT NULL,
+  `category` varchar(50) DEFAULT NULL,
+  `desc` varchar(500) DEFAULT NULL,
+  `vanha` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
+-- Dumping data for table warehouse.products: ~7 rows (suunnilleen)
+/*!40000 ALTER TABLE `products` DISABLE KEYS */;
+INSERT INTO `products` (`id`, `name`, `price`, `quantity`, `category`, `desc`, `vanha`) VALUES
+	(1, 'FT240-43', 9.75, 68, 'ferrite', NULL, 0),
+	(2, 'FT240-61', 14.00, 50, 'ferrite', NULL, 0),
+	(3, 'rg-214', 1.59, 498, 'kaapeli', NULL, 0),
+	(4, 'FT-2423', 12.00, 799, 'ferrite', NULL, 0),
+	(7, 'rg-58', 1.00, 400, 'kaapeli', NULL, 0),
+	(8, 'FT-990', 399.00, 1, 'vanhat', 'Tästä toimiva ja hyvä Yaesu hyvään hintaan 100W ja sisäänrakennettulla virtalähteellä', 1),
+	(9, 'RTL-SDR-HF', 22.00, 2, 'Kaapeli', '', 0);
+/*!40000 ALTER TABLE `products` ENABLE KEYS */;
 
 -- Dumping structure for taulu warehouse.purchases
 CREATE TABLE IF NOT EXISTS `purchases` (
@@ -34,23 +48,19 @@ CREATE TABLE IF NOT EXISTS `purchases` (
   `name` varchar(255) NOT NULL,
   `total_amount` decimal(10,2) NOT NULL,
   `date` varchar(50) NOT NULL DEFAULT '',
+  `items` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`items`)),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
-
--- Dumping structure for taulu warehouse.purchase_items
-CREATE TABLE IF NOT EXISTS `purchase_items` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `purchase_id` int(11) NOT NULL,
-  `product_id` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `purchase_id` (`purchase_id`),
-  KEY `product_id` (`product_id`),
-  CONSTRAINT `purchase_items_ibfk_1` FOREIGN KEY (`purchase_id`) REFERENCES `purchases` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `purchase_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
+-- Dumping data for table warehouse.purchases: ~4 rows (suunnilleen)
+/*!40000 ALTER TABLE `purchases` DISABLE KEYS */;
+INSERT INTO `purchases` (`id`, `callsign`, `name`, `total_amount`, `date`, `items`) VALUES
+	(3, 'adad', 'sdas', 19.50, '2025-01-17T22.15.28Z', NULL),
+	(4, '2easd3q2', 'AaaaAaA', 227.43, '2025-01-17T22.15.51Z', NULL),
+	(5, 'asdada', 'asdasd', 19.50, '2025-01-17T22.31.43Z', NULL),
+	(6, 'asdada', 'asdasd', 29.25, '2025-01-17T22.31.49Z', NULL),
+	(7, 'oh3cyt', 'Miko', 19.50, '2025-01-17T22.35.36Z', NULL);
+/*!40000 ALTER TABLE `purchases` ENABLE KEYS */;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
