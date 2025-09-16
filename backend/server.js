@@ -7,6 +7,9 @@ const fs = require("fs");
 const axios = require("axios");
 const FormData = require("form-data");
 
+const multer = require("multer");
+const upload = multer({ storage: multer.memoryStorage() });
+
 const app = express();
 const port = 2058;
 
@@ -67,8 +70,26 @@ app.get("/products", async (req, res) => {
   }
 });
 
+const { Client, GatewayIntentBits } = require("discord.js");
+
+
+const DISCORD_TOKEN = process.env.DISCORD_TOKEN || "MTI4NzY3NjE1NDQyMDkyNDQ1Nw.GYplip.k_zQypsUelnEkgQ2kux5WA0_ne4THZ5kmX48a4";
+const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID || "1287679914866376724";
+const DISCORD_LOG_CHANNEL = process.env.DISCORD_LOG_CHANNEL || "1288393197269024850";
+
+
+const discordClient = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+});
+
+discordClient.once("ready", () => {
+  console.log(`✅ Discord botti kirjautunut sisään: ${discordClient.user.tag}`);
+});
+
+discordClient.login(DISCORD_TOKEN);
+
 // Lisää uusi tuote
-app.post("/addProduct", async (req, res) => {
+app.post("/addProduct", upload.single("image"), async (req, res) => {
   const { name, price, quantity, category, desc } = req.body;
 
   if (!name || !price || !quantity) {
@@ -87,11 +108,38 @@ app.post("/addProduct", async (req, res) => {
       return res.status(409).json({ error: "Tuote on jo olemassa." });
     }
 
+    let imageUrl = null;
+
+    // Jos tiedosto mukana -> lähetetään Discordiin
+    if (req.file) {
+      const buffer = req.file.buffer;
+      const channel = await discordClient.channels.fetch(DISCORD_CHANNEL_ID);
+      if (!channel) throw new Error("Kuva-kanavaa ei löydy Discordista");
+
+      const message = await channel.send({
+        content: `📦 Uusi tuotekuva: ${name}`,
+        files: [{ attachment: buffer, name: req.file.originalname }],
+      });
+
+      if (message.attachments.size > 0) {
+        imageUrl = message.attachments.first().url;
+      }
+    }
+
     await conn.query(
-      "INSERT INTO products (name, price, quantity, category, `desc`) VALUES (?, ?, ?, ?, ?)",
-      [name, price, quantity, category, desc]
+      "INSERT INTO products (name, price, quantity, category, `desc`, image_url) VALUES (?, ?, ?, ?, ?, ?)",
+      [name, price, quantity, category, desc, imageUrl]
     );
-    res.status(201).json({ message: "Tuote lisätty onnistuneesti" });
+
+    // Lähetä logiin
+    const logChannel = await discordClient.channels.fetch(DISCORD_LOG_CHANNEL);
+    if (logChannel) {
+      await logChannel.send(
+        `🆕 Tuote lisätty: **${name}** (${price} €) – kuva: ${imageUrl || "Ei kuvaa"}`
+      );
+    }
+
+    res.status(201).json({ message: "Tuote lisätty onnistuneesti", imageUrl });
   } catch (err) {
     if (DEBUG) console.error("Error adding product:", err);
     res.status(500).json({ error: "Virhe tuotetta lisättäessä" });

@@ -1,10 +1,14 @@
 {
   "dependencies": {
-    "axios": "^1.7.9",
+    "axios": "^1.12.2",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
+    "discord.js": "^14.22.1",
+    "dotenv": "^17.2.2",
     "express": "^4.21.2",
-    "mariadb": "^3.4.0",
+    "form-data": "^4.0.4",
+    "mariadb": "^3.4.5",
+    "multer": "^2.0.2",
     "pdfkit": "^0.16.0"
   }
 }
