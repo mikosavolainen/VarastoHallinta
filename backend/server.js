@@ -73,9 +73,9 @@ app.get("/products", async (req, res) => {
 const { Client, GatewayIntentBits } = require("discord.js");
 
 
-const DISCORD_TOKEN = process.env.DISCORD_TOKEN || "MTI4NzY3NjE1NDQyMDkyNDQ1Nw.GYplip.k_zQypsUelnEkgQ2kux5WA0_ne4THZ5kmX48a4";
-const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID || "1287679914866376724";
-const DISCORD_LOG_CHANNEL = process.env.DISCORD_LOG_CHANNEL || "1288393197269024850";
+const DISCORD_TOKEN = process.env.DISCORD_TOKEN || "";
+const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID || "";
+const DISCORD_LOG_CHANNEL = process.env.DISCORD_LOG_CHANNEL || "";
 
 
 const discordClient = new Client({
