@@ -24,7 +24,7 @@ const pool = mariadb.createPool({
 
 // Discord Webhook URL
 const DISCORD_WEBHOOK_URL =
-  "https://discord.com/api/webhooks/1366855317564166195/rQ1Hg4hDaTqkhVvbIGkUZiYFuqMtO4N3OCCXI53leR3ixQp-LjRKPsNqBYwZzwmqZeVu";
+  "https://discord.com/api/webhooks/your_webhook_url_here";
 
 // DEBUG-tila
 const DEBUG = true;
